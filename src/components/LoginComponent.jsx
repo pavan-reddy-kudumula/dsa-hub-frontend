@@ -4,10 +4,10 @@ import { UserContext } from '../context/UserContext.js';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useContext } from 'react';
+import api from '@/lib/axios.js';
 
 export default function LoginComponent() {
     const router = useRouter();
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const { getUser } = useContext(UserContext);
@@ -20,25 +20,10 @@ export default function LoginComponent() {
         const formData = new FormData(event.currentTarget);
         const data = Object.fromEntries(formData.entries());
 
-        const options = {
-            method: "POST",
-            headers: {
-                "content-type": "application/json"
-            },
-            body: JSON.stringify(data)
-        }
-
         try {
-            const response = await fetch(`${API_URL}/auth/login`, options);
-            const result = await response.json();
-
-            if (!response.ok) {
-                setError(result.message || 'Login failed');
-            } else {
-                await getUser();
-                console.log("user:", user);
-                router.push("/");
-            }
+            await api.post(`/auth/login`, data);
+            await getUser();
+            router.push("/dashboard");
         } catch (err) {
             console.error(err);
             setError('An error occurred. Please try again.');
@@ -48,13 +33,13 @@ export default function LoginComponent() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-blue-950 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
-                <div className="bg-white rounded-xl shadow-2xl p-8">
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-8">
                     {/* Header */}
                     <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h1>
-                        <p className="text-gray-600">Sign in to your account</p>
+                        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Welcome Back</h1>
+                        <p className="text-slate-600 dark:text-slate-300">Sign in to your account</p>
                     </div>
 
                     {/* Error Message */}
@@ -68,7 +53,7 @@ export default function LoginComponent() {
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Email Field */}
                         <div>
-                            <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                            <label htmlFor="email" className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
                                 Email Address
                             </label>
                             <input
@@ -76,14 +61,14 @@ export default function LoginComponent() {
                                 name="email"
                                 id="email"
                                 required
-                                className="w-full px-4 py-3 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                                className="w-full px-4 py-3 text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                                 placeholder="you@example.com"
                             />
                         </div>
 
                         {/* Password Field */}
                         <div>
-                            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+                            <label htmlFor="password" className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
                                 Password
                             </label>
                             <input
@@ -91,7 +76,7 @@ export default function LoginComponent() {
                                 name="password"
                                 id="password"
                                 required
-                                className="w-full px-4 py-3 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                                className="w-full px-4 py-3 text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                                 placeholder="••••••••"
                             />
                         </div>
@@ -100,7 +85,7 @@ export default function LoginComponent() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold py-3 px-4 rounded-lg transition duration-200 transform hover:scale-105 disabled:cursor-not-allowed"
+                            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:shadow-lg disabled:from-blue-400 disabled:to-purple-400 text-white font-bold py-3 px-4 rounded-lg transition duration-200 transform hover:scale-105 disabled:cursor-not-allowed"
                         >
                             {loading ? 'Signing in...' : 'Sign In'}
                         </button>
@@ -108,16 +93,16 @@ export default function LoginComponent() {
 
                     {/* Divider */}
                     <div className="my-6 flex items-center">
-                        <div className="flex-1 border-t border-gray-300"></div>
-                        <span className="px-3 text-gray-500 text-sm">or</span>
-                        <div className="flex-1 border-t border-gray-300"></div>
+                        <div className="flex-1 border-t border-slate-300 dark:border-slate-600"></div>
+                        <span className="px-3 text-slate-500 dark:text-slate-400 text-sm">or</span>
+                        <div className="flex-1 border-t border-slate-300 dark:border-slate-600"></div>
                     </div>
 
                     {/* Sign Up Link */}
                     <div className="text-center">
-                        <p className="text-gray-600 text-sm">
-                            Don't have an account?{' '}
-                            <Link href="/signup" className="text-indigo-600 hover:text-indigo-700 font-semibold">
+                        <p className="text-slate-600 dark:text-slate-300 text-sm">
+                            Don&apos;t have an account?{' '}
+                            <Link href="/signup" className="text-blue-600 hover:text-purple-600 dark:text-blue-400 dark:hover:text-purple-400 font-semibold">
                                 Sign Up
                             </Link>
                         </p>
