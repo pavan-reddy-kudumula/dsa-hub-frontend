@@ -10,7 +10,7 @@ export default function LoginComponent() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const { getUser } = useContext(UserContext);
+    const { getUserDetails } = useContext(UserContext);
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -22,7 +22,7 @@ export default function LoginComponent() {
 
         try {
             await api.post(`/auth/login`, data);
-            await getUser();
+            await getUserDetails();
             router.push("/dashboard");
         } catch (err) {
             console.error(err);

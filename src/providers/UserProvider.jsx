@@ -1,34 +1,40 @@
 "use client"
 
-import { useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { UserContext } from "@/context/UserContext";
 import api from "@/lib/axios";
 
 export default function UserProvider({children}) {
-    const [user, setUser] = useState(null);
+    const [userDetails, setUserDetails] = useState(null);
 
-    async function getUser() {
-        try {
-            const { data } = await api.get("/auth/me");
-            setUser(data.user);
-        } catch (err) {
-            console.error(err);
-        }
-    }
-
-    async function logoutUser() {
+    const logoutUser = useCallback(async () => {
         try {
             await api.post("/auth/logout");
-            setUser(null);
+            setUserDetails(null);
             return true;
         } catch (error) {
             console.error("Logout failed:", error);
             return false;
         }
-    }
+    }, []);
+
+    const getUserDetails = useCallback(async () => {
+        try {
+            const [userRes, userQueRes] = await Promise.all(
+                [api.get("/auth/me"), api.get("/users/me/questions")]);
+            setUserDetails({ user: userRes.data.user, userQuestions: userQueRes.data.userQuestions ?? [] });
+        } catch (err) {
+            // console.error(err);
+            await logoutUser();
+        }
+    }, [logoutUser]);
+
+    useEffect(() => {
+        getUserDetails() 
+    }, [getUserDetails]);
 
     return (
-        <UserContext value={{user, getUser, logoutUser}}>
+        <UserContext value={{userDetails, getUserDetails, logoutUser}}>
             {children}
         </UserContext>
     )

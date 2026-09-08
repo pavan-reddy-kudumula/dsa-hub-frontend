@@ -4,12 +4,11 @@ import { UserContext } from "@/context/UserContext"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useContext } from "react"
+import { useContext, useEffect } from "react"
 
 export default function NavbarComponent() {
-    const { user, logoutUser } = useContext(UserContext);
+    const { userDetails, logoutUser } = useContext(UserContext);
     const router = useRouter();
-    console.log(user);
 
     async function handleLogout() {
         const success = await logoutUser();
@@ -18,6 +17,8 @@ export default function NavbarComponent() {
             router.push("/");
         }
     }
+
+    const user = userDetails?.user;
 
     return (
         <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md dark:border-slate-700 dark:bg-slate-900/90">

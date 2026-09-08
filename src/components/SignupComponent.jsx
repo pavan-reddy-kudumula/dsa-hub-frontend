@@ -10,7 +10,7 @@ export default function SignupComponent() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     // const [success, setSuccess] = useState(false);
-    const { getUser } = useContext(UserContext);
+    const { getUserDetails } = useContext(UserContext);
     const router = useRouter();
 
     async function handleSubmit(event) {
@@ -24,7 +24,7 @@ export default function SignupComponent() {
 
         try {
             await api.post(`/auth/signup`, data);
-            await getUser();
+            await getUserDetails();
             // setSuccess(true);
             router.push("/");
         } catch (err) {

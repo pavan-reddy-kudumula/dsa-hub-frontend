@@ -5,23 +5,32 @@ import Link from "next/link";
 import { useContext, useEffect } from "react";
 
 export default function ProfileComponent() {
-    const { user, getUser } = useContext(UserContext);
-
-    console.log(user);
+    const { userDetails, getUserDetails } = useContext(UserContext);
 
     useEffect(() => {
-        if (!user) {
-            getUser();
+        if (!userDetails) {
+            getUserDetails();
         }
-    }, [getUser, user]);
+    }, [getUserDetails, userDetails]);
 
-    if (!user) {
+    if (!userDetails) {
         return (
             <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 dark:bg-slate-950">
                 <p className="text-sm text-slate-500 dark:text-slate-400">Loading your profile...</p>
             </main>
         );
     }
+
+    const { user, userQuestions = [] } = userDetails;
+    const questions = Array.isArray(userQuestions) ? userQuestions : [];
+    const solvedQuestions = questions.filter((entry) => (
+        entry.solved === true ||
+        entry.isSolved === true ||
+        entry.is_solved === true ||
+        entry.status === "solved"
+    )).length;
+    const questionTotal = questions.length;
+    const solvedPercentage = questionTotal > 0 ? (solvedQuestions / questionTotal) * 100 : 0;
 
     return (
         <main className="min-h-screen bg-slate-50 px-4 py-10 dark:bg-slate-950 sm:px-6 lg:px-8">
@@ -54,6 +63,24 @@ export default function ProfileComponent() {
                             <div className="rounded-xl bg-slate-50 p-5 dark:bg-slate-800">
                                 <p className="text-sm text-slate-500 dark:text-slate-400">Location</p>
                                 <p className="mt-2 text-lg font-semibold text-slate-900 dark:text-white">{user.address || "Not provided"}</p>
+                            </div>
+                            <div className="flex items-center gap-4 rounded-xl bg-emerald-50 p-5 dark:bg-emerald-950/30">
+                                <div
+                                    className="relative grid h-20 w-20 shrink-0 place-items-center rounded-full"
+                                    style={{ background: `conic-gradient(#10b981 ${solvedPercentage}%, #d1d5db ${solvedPercentage}% 100%)` }}
+                                    aria-label={`${solvedQuestions} of ${questionTotal} questions solved`}
+                                >
+                                    <div className="grid h-16 w-16 place-items-center rounded-full bg-emerald-50 dark:bg-slate-900">
+                                        <p className="text-center text-sm font-bold text-slate-900 dark:text-white">
+                                            {solvedQuestions} / {questionTotal}
+                                            <span className="mt-0.5 block text-[10px] font-medium text-slate-500 dark:text-slate-400">solved</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">Question progress</p>
+                                    <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-300">{Math.round(solvedPercentage)}% complete</p>
+                                </div>
                             </div>
                         </div>
 
