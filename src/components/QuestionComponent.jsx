@@ -4,6 +4,7 @@ import { useContext, useEffect, useState } from "react";
 import Link from "next/link";
 import api from "@/lib/axios";
 import NavbarComponent from "@/components/NavbarComponent";
+import ConfirmModal from "@/components/ConfirmModal";
 import { UserContext } from "@/context/UserContext";
 
 function formatValue(value) {
@@ -38,11 +39,14 @@ const statusDetails = {
 };
 
 export default function QuestionComponent({ questionId }) {
-    const userDetails = useContext(UserContext);
+    const { userDetails, getUserDetails } = useContext(UserContext);
     const [questionDetails, setQuestionDetails] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
+    const [responseError, SetResponseError] = useState(null);
     const [copiedSolutionId, setCopiedSolutionId] = useState(null);
+    const [pendingStatus, setPendingStatus] = useState(null);
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -114,6 +118,33 @@ export default function QuestionComponent({ questionId }) {
     const userQuestions = Array.isArray(userDetails?.userQuestions) ? userDetails.userQuestions : [];
     const userQuestion = userQuestions.find((entry) => String(entry.question_id) === String(question.id ?? questionId));
     const currentStatus = statusDetails[userQuestion?.status] ?? statusDetails.not_attempted;
+    const statuses = Object.entries(statusDetails);
+
+    function requestStatusChange(status) {
+        if (status === userQuestion?.status || (status === "not_attempted" && !userQuestion)) {
+            return;
+        }
+
+        setPendingStatus(status);
+    }
+
+    async function confirmStatusChange() {
+        if (!pendingStatus) return;
+
+        SetResponseError(null)
+        setIsUpdatingStatus(true);
+        try {
+            await api.patch(`/users/me/questions/${questionId}`, { status: pendingStatus });
+            await getUserDetails();
+        } catch (requestError) {
+            console.error(requestError?.response?.data?.message);
+            SetResponseError(requestError?.response?.data?.message);
+        } finally {
+            setIsUpdatingStatus(false);
+            setPendingStatus(null);
+        }
+    }
+
     async function copySolution(solution) {
         if (!solution?.solution) return;
 
@@ -144,9 +175,23 @@ export default function QuestionComponent({ questionId }) {
                                 <h1 className="max-w-3xl text-3xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-5xl">{formatValue(question.title)}</h1>
                                 <p className="mt-3 max-w-2xl text-base text-slate-500 dark:text-slate-400">Solve it once. Understand the pattern forever.</p>
                             </div>
-                            <div className={`inline-flex h-11 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-semibold ${currentStatus.className}`}>
-                                <span aria-hidden="true">{currentStatus.icon}</span>
-                                {currentStatus.label}
+                            <div className="grid w-full max-w-xs grid-cols-2 gap-2 sm:w-auto" role="group" aria-label="Question status">
+                                { responseError && (
+                                    <p className="text-red-500 w-fit col-span-2">{responseError}</p>
+                                ) }
+                                {statuses.map(([status, details]) => (
+                                    <button
+                                        key={status}
+                                        type="button"
+                                        onClick={() => requestStatusChange(status)}
+                                        disabled={isUpdatingStatus}
+                                        aria-pressed={status === (userQuestion?.status ?? "not_attempted")}
+                                        className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 ${details.className} ${status === (userQuestion?.status ?? "not_attempted") ? "ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-slate-950" : ""}`}
+                                    >
+                                        <span aria-hidden="true">{details.icon}</span>
+                                        {details.label}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </header>
@@ -265,6 +310,13 @@ export default function QuestionComponent({ questionId }) {
                     </div>
                 </div>
             </main>
+            {pendingStatus && (
+                <ConfirmModal
+                    msg={`Change status to ${statusDetails[pendingStatus].label}?`}
+                    onCancel={() => setPendingStatus(null)}
+                    onOk={confirmStatusChange}
+                />
+            )}
         </>
     );
 }
