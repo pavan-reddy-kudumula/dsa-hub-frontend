@@ -1,6 +1,7 @@
 "use client";
 
 import { useContext, useEffect, useState } from "react";
+import { Bookmark } from "lucide-react";
 import Link from "next/link";
 import api from "@/lib/axios";
 import NavbarComponent from "@/components/NavbarComponent";
@@ -77,6 +78,22 @@ export default function QuestionComponent({ questionId }) {
         };
     }, [questionId]);
 
+    async function handleBookmarkClick(questionId, isBookmarked) {
+        try {
+            if(!isBookmarked) {
+                await api.post("/bookmarks", { questionId });
+            } else {
+                await api.delete(`/bookmarks/${questionId}`);
+            }
+            setQuestionDetails((current) => ({
+                ...current,
+                bookmark: !isBookmarked,
+            }));
+        } catch (error) {
+            console.error(error?.response?.data?.message);
+        }
+    }
+
     if (isLoading) {
         return (
             <>
@@ -115,6 +132,7 @@ export default function QuestionComponent({ questionId }) {
     const topics = questionDetails?.topics ?? [];
     const platformLinks = questionDetails?.platform_links ?? [];
     const companies = questionDetails?.companies ?? [];
+    const isBookmarked = questionDetails?.bookmark ?? false;
     const userQuestions = Array.isArray(userDetails?.userQuestions) ? userDetails.userQuestions : [];
     const userQuestion = userQuestions.find((entry) => String(entry.question_id) === String(question.id ?? questionId));
     const currentStatus = statusDetails[userQuestion?.status] ?? statusDetails.not_attempted;
@@ -165,10 +183,15 @@ export default function QuestionComponent({ questionId }) {
                     </nav>
 
                     <header className="mt-7 border-b border-slate-200 pb-8 dark:border-slate-800">
-                        <div className="flex flex-wrap items-center gap-3 text-xs font-bold uppercase tracking-[0.18em]">
-                            <span className="rounded-full bg-blue-100 px-3 py-1.5 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">Question {formatValue(question.id)}</span>
-                            <span className="text-emerald-600 dark:text-emerald-400">{formatValue(question.difficulty)}</span>
-                            <span className="text-slate-400 dark:text-slate-500">{formatValue(question.estimated_time)} min</span>
+                        <div className="flex justify-between items-center">
+                            <div className="flex flex-wrap items-center gap-3 text-xs font-bold uppercase tracking-[0.18em]">
+                                <span className="rounded-full bg-blue-100 px-3 py-1.5 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">Question {formatValue(question.id)}</span>
+                                <span className="text-emerald-600 dark:text-emerald-400">{formatValue(question.difficulty)}</span>
+                                <span className="text-slate-400 dark:text-slate-500">{formatValue(question.estimated_time)} min</span>
+                            </div>
+                            <button onClick={() => handleBookmarkClick(question.id ?? questionId, isBookmarked)}>
+                                <Bookmark fill={isBookmarked ? "blue" : ""} className="hover:cursor-pointer" />
+                            </button>
                         </div>
                         <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                             <div>
