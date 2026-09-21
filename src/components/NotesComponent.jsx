@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { BookOpen, CalendarDays, FileText, Plus, RefreshCw } from 'lucide-react';
+import { BookOpen, CalendarDays, FileText, PenLine, Plus, RefreshCw } from 'lucide-react';
 import CreateNoteComponent from '@/components/CreateNoteComponent';
 import NavbarComponent from '@/components/NavbarComponent';
+import NoteModalComponent from '@/components/NoteModalComponent';
 import api from '@/lib/axios';
 
 function formatDate(date) {
@@ -21,6 +22,11 @@ export default function NotesComponent() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [error, setError] = useState('');
+	const [editingNote, setEditingNote] = useState(null);
+	const [editTitle, setEditTitle] = useState('');
+	const [editDescription, setEditDescription] = useState('');
+	const [isUpdating, setIsUpdating] = useState(false);
+	const [editError, setEditError] = useState('');
 
 	const fetchNotes = useCallback(async (showRefreshState = false) => {
 		if (showRefreshState) setIsRefreshing(true);
@@ -44,6 +50,42 @@ export default function NotesComponent() {
 
 		return () => window.clearTimeout(requestId);
 	}, [fetchNotes]);
+
+	function openEditModal(note) {
+		setEditingNote(note);
+		setEditTitle(note.title ?? '');
+		setEditDescription(note.description ?? '');
+		setEditError('');
+	}
+
+	function closeEditModal(force = false) {
+		if (isUpdating && !force) return;
+
+		setEditingNote(null);
+		setEditTitle('');
+		setEditDescription('');
+		setEditError('');
+	}
+
+	async function handleUpdate(event) {
+		event.preventDefault();
+		setEditError('');
+		setIsUpdating(true);
+
+		try {
+			await api.patch(`/notes/${editingNote.id}`, {
+				title: editTitle,
+				description: editDescription,
+			});
+			closeEditModal(true);
+			await fetchNotes(true);
+		} catch (requestError) {
+			console.error(requestError?.response?.data?.message || requestError);
+			setEditError('Unable to update the note right now.');
+		} finally {
+			setIsUpdating(false);
+		}
+	}
 
 	return (
 		<div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
@@ -115,9 +157,19 @@ export default function NotesComponent() {
 							{notes.map((note) => (
 								<article key={note.id} className="group flex min-h-52 flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-900">
 									<div className="flex items-start justify-between gap-4">
-										<span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
-											<FileText size={18} aria-hidden="true" />
-										</span>
+										<div className="flex items-center gap-3">
+											<span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
+												<FileText size={18} aria-hidden="true" />
+											</span>
+											<button
+												type="button"
+												onClick={() => openEditModal(note)}
+												aria-label={`Edit ${note.title}`}
+												className="hover:cursor-pointer flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/50 dark:hover:text-blue-400"
+											>
+												<PenLine size={15} aria-hidden="true" />
+											</button>
+										</div>
 										<span className="flex items-center gap-1.5 text-xs text-slate-400">
 											<CalendarDays size={14} aria-hidden="true" /> {formatDate(note.updated_at || note.created_at)}
 										</span>
@@ -130,6 +182,21 @@ export default function NotesComponent() {
 					)}
 				</section>
 			</main>
+
+			<NoteModalComponent
+				isOpen={Boolean(editingNote)}
+				title={editTitle}
+				description={editDescription}
+				isSubmitting={isUpdating}
+				error={editError}
+				onClose={closeEditModal}
+				onSubmit={handleUpdate}
+				onTitleChange={setEditTitle}
+				onDescriptionChange={setEditDescription}
+				heading="Edit Note"
+				subtitle="Update something you want to remember."
+				submitLabel="Update Note"
+			/>
 		</div>
 	);
 }
