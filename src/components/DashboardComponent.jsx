@@ -26,11 +26,10 @@ function getQuestionTitle(question) {
 
 function getQuestionHref(question) {
     const questionId = question?.question_id ?? question?.questionId ?? question?.id;
-    const patternId = question?.pattern_id ?? question?.patternId;
 
-    if (!questionId || !patternId) return "/patterns";
+    if (!questionId) return "/patterns";
 
-    return `/patterns/${patternId}/questions/${questionId}`;
+    return `/questions/${questionId}`;
 }
 
 export default function DashboardComponent() {

@@ -90,7 +90,7 @@ export default function BookmarksComponent() {
                         {bookmarks.map((bookmark) => (
                             <Link
                                 key={bookmark.question_id}
-                                href={`/patterns/${bookmark.pattern_id}/questions/${bookmark.question_id}`}
+                                href={`/questions/${bookmark.question_id}`}
                                 className="group flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700"
                             >
                                 <div className="min-w-0">

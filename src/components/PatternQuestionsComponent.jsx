@@ -110,7 +110,7 @@ export default function PatternQuestionsComponent({ patternId }) {
                     ) : (
                         <div className="space-y-3">
                             {patternQuestions.map((question, index) => (
-                                <Link key={question.id} href={`/patterns/${pattern.id}/questions/${question.id}`} className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700 sm:p-5">
+                                <Link key={question.id} href={`/questions/${question.id}`} className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700 sm:p-5">
                                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-sm font-bold text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
                                         {String(question.id).padStart(2, "0")}
                                     </span>
