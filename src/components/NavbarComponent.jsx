@@ -32,8 +32,8 @@ export default function NavbarComponent() {
 
                 { user ? (
                     <div className="flex min-w-0 items-center gap-1 sm:gap-2">
-                        <Link href="/" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-400">
-                            Home
+                        <Link href="/dashboard" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-400">
+                            Dashboard
                         </Link>
                         <Link href="/patterns" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-400">
                             Patterns

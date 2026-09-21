@@ -7,6 +7,7 @@ import api from "@/lib/axios";
 import NavbarComponent from "@/components/NavbarComponent";
 import ConfirmModal from "@/components/ConfirmModal";
 import { UserContext } from "@/context/UserContext";
+import CreateNoteComponent from "./CreateNoteComponent";
 
 function formatValue(value) {
     if (value === null || value === undefined || value === "") {
@@ -176,10 +177,16 @@ export default function QuestionComponent({ questionId }) {
             <NavbarComponent />
             <main className="min-h-screen bg-[#f7f9fc] px-4 pb-16 pt-8 dark:bg-slate-950 sm:px-6 lg:px-8">
                 <div className="mx-auto max-w-6xl">
-                    <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400" aria-label="Breadcrumb">
-                        <Link href="/patterns" className="transition hover:text-blue-600 dark:hover:text-blue-400">Patterns</Link>
-                        <span aria-hidden="true">/</span>
-                        <span>Question {formatValue(question.display_order)}</span>
+                    <nav className="flex justify-between items-center gap-2 text-sm text-slate-500 dark:text-slate-400" aria-label="Breadcrumb">
+                        <div className="flex gap-2">
+                            <Link href="/patterns" className="transition hover:text-blue-600 dark:hover:text-blue-400">Patterns</Link>
+                            <span aria-hidden="true">/</span>
+                            <span>Question {formatValue(question.display_order)}</span>
+                        </div>
+                        <button onClick={() => handleBookmarkClick(question.id ?? questionId, isBookmarked)}>
+                            <Bookmark fill={isBookmarked ? "blue" : ""} className="hover:cursor-pointer" />
+                        </button>
+                        
                     </nav>
 
                     <header className="mt-7 border-b border-slate-200 pb-8 dark:border-slate-800">
@@ -189,9 +196,7 @@ export default function QuestionComponent({ questionId }) {
                                 <span className="text-emerald-600 dark:text-emerald-400">{formatValue(question.difficulty)}</span>
                                 <span className="text-slate-400 dark:text-slate-500">{formatValue(question.estimated_time)} min</span>
                             </div>
-                            <button onClick={() => handleBookmarkClick(question.id ?? questionId, isBookmarked)}>
-                                <Bookmark fill={isBookmarked ? "blue" : ""} className="hover:cursor-pointer" />
-                            </button>
+                            <CreateNoteComponent />
                         </div>
                         <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                             <div>

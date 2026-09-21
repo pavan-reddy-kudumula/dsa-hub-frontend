@@ -1,6 +1,7 @@
 'use client'
 
 import api from "@/lib/axios";
+import NavbarComponent from "./NavbarComponent";
 import Link from "next/link";
 import { ArrowUpRight, Bookmark } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -39,8 +40,10 @@ export default function BookmarksComponent() {
     }, []);
 
     return (
-        <main className="min-h-screen bg-slate-50 px-4 py-10 dark:bg-slate-950 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-4xl">
+        <>
+            <NavbarComponent />
+            <main className="min-h-screen bg-slate-50 px-4 py-10 dark:bg-slate-950 sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-4xl">
                 <div className="mb-8">
                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
                         <Bookmark size={23} aria-hidden="true" />
@@ -106,7 +109,8 @@ export default function BookmarksComponent() {
                         ))}
                     </div>
                 )}
-            </div>
-        </main>
+                </div>
+            </main>
+        </>
     );
 }
