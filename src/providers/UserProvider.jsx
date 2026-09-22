@@ -3,9 +3,11 @@
 import { useCallback, useState, useEffect } from "react";
 import { UserContext } from "@/context/UserContext";
 import api from "@/lib/axios";
+import { useRouter } from "next/navigation";
 
 export default function UserProvider({children}) {
     const [userDetails, setUserDetails] = useState(null);
+    const router = useRouter();
 
     const logoutUser = useCallback(async () => {
         try {
@@ -24,8 +26,15 @@ export default function UserProvider({children}) {
                 [api.get("/auth/me"), api.get("/users/me/questions")]);
             setUserDetails({ user: userRes.data.user, userQuestions: userQueRes.data.userQuestions ?? [] });
         } catch (err) {
-            // console.error(err);
-            await logoutUser();
+            const status = err?.response?.status;
+
+            if (status === 401) {
+                await logoutUser();
+                router.replace("/login");
+                return;
+            }
+
+            console.error("Failed to fetch user details:", err);
         }
     }, [logoutUser]);
 
