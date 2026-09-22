@@ -28,11 +28,12 @@ export default function UserProvider({children}) {
         } catch (err) {
             const status = err?.response?.status;
 
-            if (status === 401) {
-                await logoutUser();
-                router.replace("/login");
-                return;
-            }
+            // if (status === 401) {
+            //     await logoutUser();
+            //     router.replace("/login");
+            //     console.log("replcae")
+            //     return;
+            // }
 
             console.error("Failed to fetch user details:", err);
         }
