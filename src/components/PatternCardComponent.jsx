@@ -1,13 +1,18 @@
 "use client"
 
 import api from "@/lib/axios";
+import CreatePatternComponent from "@/components/CreatePatternComponent";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { UserContext } from "@/context/UserContext";
 
 export default function PatternCardComponent() {
+    const { userDetails } = useContext(UserContext)
     const [patterns, setPatterns] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
+
+    const isAdmin = userDetails?.user?.role === "admin";
 
     useEffect(() => {
         let isMounted = true;
@@ -39,6 +44,16 @@ export default function PatternCardComponent() {
         };
     }, []);
 
+    async function refreshPatterns() {
+        try {
+            const { data } = await api.get("/patterns");
+            setPatterns(data.patterns ?? []);
+        } catch (requestError) {
+            console.error(requestError);
+            setError("Unable to load patterns right now.");
+        }
+    }
+
     return (
         <main className="min-h-screen bg-slate-50 px-4 py-10 dark:bg-slate-950 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-7xl">
@@ -53,6 +68,8 @@ export default function PatternCardComponent() {
                         Build a repeatable approach to solving data structure and algorithm problems.
                     </p>
                 </div>
+
+                { isAdmin && <CreatePatternComponent onCreated={refreshPatterns} /> }
 
                 {isLoading && (
                     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Loading patterns">
