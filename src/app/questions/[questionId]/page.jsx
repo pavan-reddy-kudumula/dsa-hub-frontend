@@ -1,9 +1,9 @@
-import QuestionComponent from "@/components/QuestionComponent";
+import QuestionDetailsComponent from "@/components/QuestionDetailsComponent";
 
 export default async function QuestionDetails({params}) {
     const { questionId } = await params;
 
     return (
-        <QuestionComponent questionId={questionId}/>
+        <QuestionDetailsComponent questionId={questionId}/>
     )
 }

@@ -40,7 +40,7 @@ const statusDetails = {
     },
 };
 
-export default function QuestionComponent({ questionId }) {
+export default function QuestionDetailsComponent({ questionId }) {
     const { userDetails, getUserDetails } = useContext(UserContext);
     const [questionDetails, setQuestionDetails] = useState(null);
     const [isLoading, setIsLoading] = useState(true);

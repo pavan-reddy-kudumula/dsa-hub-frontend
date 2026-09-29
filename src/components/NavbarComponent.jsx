@@ -4,7 +4,7 @@ import { UserContext } from "@/context/UserContext"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useContext, useEffect } from "react"
+import { useContext } from "react"
 
 export default function NavbarComponent() {
     const { userDetails, logoutUser } = useContext(UserContext);
@@ -37,6 +37,9 @@ export default function NavbarComponent() {
                         </Link>
                         <Link href="/patterns" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-400">
                             Patterns
+                        </Link>
+                        <Link href="/questions" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-400">
+                            Questions
                         </Link>
                         <Link href="/bookmarks" className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-400 sm:block">
                             Bookmarks
