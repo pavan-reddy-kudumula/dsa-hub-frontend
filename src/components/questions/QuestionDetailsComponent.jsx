@@ -1,7 +1,7 @@
 "use client";
 
 import { useContext, useEffect, useState } from "react";
-import { Bookmark, Pencil, Plus, Trash2 } from "lucide-react";
+import { Bookmark, ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import api from "@/lib/axios";
 import NavbarComponent from "@/components/NavbarComponent";
@@ -10,6 +10,7 @@ import { UserContext } from "@/context/UserContext";
 import CreateNoteComponent from "../notes/CreateNoteComponent";
 import QuestionExampleModal from "./QuestionExampleModal";
 import QuestionPlatformModal from "./QuestionPlatformModal";
+import QuestionSolutionModal from "./QuestionSolutionModal";
 
 function formatValue(value) {
     if (value === null || value === undefined || value === "") {
@@ -57,6 +58,9 @@ export default function QuestionDetailsComponent({ questionId }) {
     const [editingPlatformLink, setEditingPlatformLink] = useState(null);
     const [pendingPlatformDeletion, setPendingPlatformDeletion] = useState(null);
     const [platformError, setPlatformError] = useState("");
+    const [editingSolution, setEditingSolution] = useState(null);
+    const [pendingSolutionDeletion, setPendingSolutionDeletion] = useState(null);
+    const [solutionError, setSolutionError] = useState("");
 
     useEffect(() => {
         let isMounted = true;
@@ -260,6 +264,46 @@ export default function QuestionDetailsComponent({ questionId }) {
         }
     }
 
+    function handleSolutionSaved(savedSolution, originalSolutionId) {
+        if (!isAdmin) return;
+
+        setQuestionDetails((currentDetails) => {
+            const currentSolutions = currentDetails?.solutions ?? [];
+            const savedSolutionId = originalSolutionId ?? savedSolution.id ?? savedSolution.solution_id;
+            const existingSolutionIndex = currentSolutions.findIndex((currentSolution) => {
+                const currentSolutionId = currentSolution.id ?? currentSolution.solution_id;
+                return savedSolutionId && String(currentSolutionId) === String(savedSolutionId);
+            });
+            const nextSolutions = existingSolutionIndex === -1
+                ? [...currentSolutions, savedSolution]
+                : currentSolutions.map((currentSolution, index) => index === existingSolutionIndex ? savedSolution : currentSolution);
+
+            return { ...currentDetails, solutions: nextSolutions };
+        });
+        setEditingSolution(null);
+    }
+
+    async function confirmSolutionDeletion() {
+        if (!isAdmin || !pendingSolutionDeletion) return;
+
+        const solutionId = pendingSolutionDeletion.id ?? pendingSolutionDeletion.solution_id;
+        setSolutionError("");
+        try {
+            await api.delete(`/questions/${questionId}/solutions/${solutionId}`);
+            setQuestionDetails((currentDetails) => ({
+                ...currentDetails,
+                solutions: (currentDetails?.solutions ?? []).filter((currentSolution) => {
+                    const currentSolutionId = currentSolution.id ?? currentSolution.solution_id;
+                    return String(currentSolutionId) !== String(solutionId);
+                }),
+            }));
+            setPendingSolutionDeletion(null);
+        } catch (requestError) {
+            console.error(requestError?.response?.data?.message || requestError);
+            setSolutionError(requestError?.response?.data?.message || "Unable to delete the solution right now.");
+        }
+    }
+
     return (
         <>
             <NavbarComponent />
@@ -379,8 +423,12 @@ export default function QuestionDetailsComponent({ questionId }) {
                             <section aria-labelledby="solution-heading">
                                 <div className="flex items-center justify-between gap-4">
                                     <h2 id="solution-heading" className="text-xl font-bold text-slate-950 dark:text-white">Solution</h2>
-                                    <span className="text-sm text-slate-400">{solutions.length} solution{solutions.length === 1 ? "" : "s"}</span>
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-sm text-slate-400">{solutions.length} solution{solutions.length === 1 ? "" : "s"}</span>
+                                        {isAdmin && <button type="button" onClick={() => setEditingSolution({})} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"><Plus size={16} aria-hidden="true" />Add solution</button>}
+                                    </div>
                                 </div>
+                                {solutionError && <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-400">{solutionError}</p>}
                                 {solutions.length ? (
                                     <div className="mt-4 space-y-3">
                                         {solutions.map((solution, index) => (
@@ -390,7 +438,7 @@ export default function QuestionDetailsComponent({ questionId }) {
                                                         <span className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-50 text-xs font-bold text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">{index + 1}</span>
                                                         <span className="capitalize">{solution.language_name ?? "Code"} solution</span>
                                                     </span>
-                                                    <span aria-hidden="true" className="text-lg text-slate-400 transition-transform group-open:rotate-180">⌄</span>
+                                                    <span className="flex items-center gap-3"><ChevronDown size={18} aria-hidden="true" className="text-slate-400 transition-transform group-open:rotate-180" />{isAdmin && <><button type="button" onClick={(event) => { event.preventDefault(); setEditingSolution(solution); }} aria-label="Edit solution" title="Edit solution" className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"><Pencil size={15} aria-hidden="true" /></button><button type="button" onClick={(event) => { event.preventDefault(); setPendingSolutionDeletion(solution); }} aria-label="Delete solution" title="Delete solution" className="text-slate-400 hover:text-red-600 dark:hover:text-red-400"><Trash2 size={15} aria-hidden="true" /></button></>}</span>
                                                 </summary>
                                                 <div className="border-t border-slate-200 bg-[#182230] dark:border-slate-800">
                                                     <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
@@ -399,6 +447,7 @@ export default function QuestionDetailsComponent({ questionId }) {
                                                             {copiedSolutionId === solution.id ? "Copied" : "Copy code"}
                                                         </button>
                                                     </div>
+                                                    {solution.description && <p className="border-b border-white/10 px-5 py-3 text-sm leading-6 text-slate-300">{solution.description}</p>}
                                                     <pre className="overflow-x-auto p-5 text-sm leading-7 text-slate-200"><code>{formatValue(solution.solution)}</code></pre>
                                                 </div>
                                             </details>
@@ -480,6 +529,21 @@ export default function QuestionDetailsComponent({ questionId }) {
                     msg="Delete this platform link?"
                     onCancel={() => setPendingPlatformDeletion(null)}
                     onOk={confirmPlatformDeletion}
+                />
+            )}
+            {isAdmin && editingSolution && (
+                <QuestionSolutionModal
+                    questionId={questionId}
+                    solution={editingSolution.id || editingSolution.solution_id ? editingSolution : null}
+                    onClose={() => setEditingSolution(null)}
+                    onSaved={handleSolutionSaved}
+                />
+            )}
+            {isAdmin && pendingSolutionDeletion && (
+                <ConfirmModal
+                    msg="Delete this solution?"
+                    onCancel={() => setPendingSolutionDeletion(null)}
+                    onOk={confirmSolutionDeletion}
                 />
             )}
         </>
