@@ -1,4 +1,4 @@
-import QuestionsComponent from "@/components/QuestionsComponent";
+import QuestionsComponent from "@/components/questions/QuestionsComponent";
 
 export default function Questions() {
     return (

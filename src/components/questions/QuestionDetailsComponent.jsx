@@ -7,7 +7,7 @@ import api from "@/lib/axios";
 import NavbarComponent from "@/components/NavbarComponent";
 import ConfirmModal from "@/components/ConfirmModal";
 import { UserContext } from "@/context/UserContext";
-import CreateNoteComponent from "./CreateNoteComponent";
+import CreateNoteComponent from "../notes/CreateNoteComponent";
 
 function formatValue(value) {
     if (value === null || value === undefined || value === "") {

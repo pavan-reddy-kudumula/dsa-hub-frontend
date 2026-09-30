@@ -1,8 +1,8 @@
 "use client"
 
 import api from "@/lib/axios";
-import CreatePatternComponent from "@/components/CreatePatternComponent";
-import PatternModalComponent from "@/components/PatternModalComponent";
+import CreatePatternComponent from "@/components/patterns/CreatePatternComponent";
+import PatternModalComponent from "@/components/patterns/PatternModalComponent";
 import Link from "next/link";
 import { Pencil, Trash2 } from "lucide-react";
 import { useContext, useEffect, useState } from "react";

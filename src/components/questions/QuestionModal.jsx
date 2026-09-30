@@ -54,10 +54,12 @@ export default function QuestionModal({ question = null, onClose, onSaved }) {
             problem_statement: form.problem_statement.trim(),
             notes: form.notes.trim() || "",
             difficulty: form.difficulty,
-            display_order: Number(form.display_order),
             estimated_time: Number(form.estimated_time),
             xp: Number(form.xp),
         };
+        if (form.display_order !== "") {
+            payload.display_order = Number(form.display_order);
+        }
 
         try {
             const response = isEditing
@@ -100,7 +102,7 @@ export default function QuestionModal({ question = null, onClose, onSaved }) {
                         <select value={form.difficulty} onChange={(event) => updateField("difficulty", event.target.value)} required className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"><option value="basic">Basic</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select>
                     </label>
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Display order <span className="font-normal text-slate-500">(optional)</span>
-                        <input type="number" min="1" step="1" value={form.display_order} onChange={(event) => updateField("display_order", event.target.value)} required className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                        <input type="number" min="1" step="1" value={form.display_order} onChange={(event) => updateField("display_order", event.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
                     </label>
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Estimated time (minutes)
                         <input type="number" min="1" step="1" value={form.estimated_time} onChange={(event) => updateField("estimated_time", event.target.value)} required className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />

@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { BookOpen, CalendarDays, FileText, PenLine, Plus, RefreshCw } from 'lucide-react';
-import CreateNoteComponent from '@/components/CreateNoteComponent';
+import CreateNoteComponent from '@/components/notes/CreateNoteComponent';
 import NavbarComponent from '@/components/NavbarComponent';
-import NoteModalComponent from '@/components/NoteModalComponent';
+import NoteModalComponent from '@/components/notes/NoteModalComponent';
 import api from '@/lib/axios';
 
 function formatDate(date) {

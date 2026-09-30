@@ -1,4 +1,4 @@
-import PatternQuestionsComponent from "@/components/PatternQuestionsComponent"
+import PatternQuestionsComponent from "@/components/patterns/PatternQuestionsComponent"
 import NavbarComponent from "@/components/NavbarComponent";
 
 export default async function PatternDetails({ params }) {

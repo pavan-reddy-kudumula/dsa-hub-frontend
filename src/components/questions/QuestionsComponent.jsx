@@ -1,12 +1,12 @@
 "use client"
 
 import api from "@/lib/axios"
-import NavbarComponent from "./NavbarComponent"
+import NavbarComponent from "../NavbarComponent"
 import { ListChecks, Plus } from "lucide-react"
 import { useContext, useState, useEffect } from "react"
 import { UserContext } from "@/context/UserContext"
 import QuestionModal from "./QuestionModal"
-import ConfirmModal from "./ConfirmModal"
+import ConfirmModal from "../ConfirmModal"
 import QuestionListComponent from "./QuestionListComponent"
 
 export default function QuestionsComponent() {

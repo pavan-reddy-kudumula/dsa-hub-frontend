@@ -1,4 +1,4 @@
-import QuestionDetailsComponent from "@/components/QuestionDetailsComponent";
+import QuestionDetailsComponent from "@/components/questions/QuestionDetailsComponent";
 
 export default async function QuestionDetails({params}) {
     const { questionId } = await params;

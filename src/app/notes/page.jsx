@@ -1,4 +1,4 @@
-import NotesComponent from "@/components/NotesComponent"
+import NotesComponent from "@/components/notes/NotesComponent"
 
 export default function Notes() {
     return (
