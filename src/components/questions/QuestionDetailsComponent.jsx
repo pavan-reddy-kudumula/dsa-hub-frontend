@@ -1,13 +1,14 @@
 "use client";
 
 import { useContext, useEffect, useState } from "react";
-import { Bookmark } from "lucide-react";
+import { Bookmark, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import api from "@/lib/axios";
 import NavbarComponent from "@/components/NavbarComponent";
 import ConfirmModal from "@/components/ConfirmModal";
 import { UserContext } from "@/context/UserContext";
 import CreateNoteComponent from "../notes/CreateNoteComponent";
+import QuestionExampleModal from "./QuestionExampleModal";
 
 function formatValue(value) {
     if (value === null || value === undefined || value === "") {
@@ -49,6 +50,9 @@ export default function QuestionDetailsComponent({ questionId }) {
     const [copiedSolutionId, setCopiedSolutionId] = useState(null);
     const [pendingStatus, setPendingStatus] = useState(null);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    const [editingExample, setEditingExample] = useState(null);
+    const [pendingExampleDeletion, setPendingExampleDeletion] = useState(null);
+    const [exampleError, setExampleError] = useState("");
 
     useEffect(() => {
         let isMounted = true;
@@ -172,6 +176,44 @@ export default function QuestionDetailsComponent({ questionId }) {
         window.setTimeout(() => setCopiedSolutionId(null), 1800);
     }
 
+    function handleExampleSaved(savedExample, originalExampleId) {
+        setQuestionDetails((currentDetails) => {
+            const currentExamples = currentDetails?.examples ?? [];
+            const savedExampleId = originalExampleId ?? savedExample.id ?? savedExample.example_id;
+            const existingExampleIndex = currentExamples.findIndex((example) => {
+                const exampleId = example.id ?? example.example_id;
+                return savedExampleId && String(exampleId) === String(savedExampleId);
+            });
+            const nextExamples = existingExampleIndex === -1
+                ? [...currentExamples, savedExample]
+                : currentExamples.map((example, index) => index === existingExampleIndex ? savedExample : example);
+
+            return { ...currentDetails, examples: nextExamples };
+        });
+        setEditingExample(null);
+    }
+
+    async function confirmExampleDeletion() {
+        if (!pendingExampleDeletion) return;
+
+        const exampleId = pendingExampleDeletion.id ?? pendingExampleDeletion.example_id;
+        setExampleError("");
+        try {
+            await api.delete(`/questions/${questionId}/examples/${exampleId}`);
+            setQuestionDetails((currentDetails) => ({
+                ...currentDetails,
+                examples: (currentDetails?.examples ?? []).filter((example) => {
+                    const currentExampleId = example.id ?? example.example_id;
+                    return String(currentExampleId) !== String(exampleId);
+                }),
+            }));
+            setPendingExampleDeletion(null);
+        } catch (requestError) {
+            console.error(requestError?.response?.data?.message || requestError);
+            setExampleError(requestError?.response?.data?.message || "Unable to delete the example right now.");
+        }
+    }
+
     return (
         <>
             <NavbarComponent />
@@ -241,14 +283,29 @@ export default function QuestionDetailsComponent({ questionId }) {
                             <section aria-labelledby="examples-heading">
                                 <div className="flex items-center justify-between gap-4">
                                     <h2 id="examples-heading" className="text-xl font-bold text-slate-950 dark:text-white">Examples</h2>
-                                    <span className="text-sm text-slate-400">{examples.length} example{examples.length === 1 ? "" : "s"}</span>
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-sm text-slate-400">{examples.length} example{examples.length === 1 ? "" : "s"}</span>
+                                        <button type="button" onClick={() => setEditingExample({})} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+                                            <Plus size={16} aria-hidden="true" />
+                                            Add example
+                                        </button>
+                                    </div>
                                 </div>
+                                {exampleError && <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-400">{exampleError}</p>}
                                 <div className="mt-4 space-y-4">
                                     {examples.length ? examples.map((example, index) => (
                                         <article key={example.id ?? index} className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
                                             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3 dark:border-slate-800">
                                                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Example {index + 1}</span>
-                                                <span className="text-xs font-medium text-slate-400">Example details</span>
+                                                <div className="flex items-center gap-3">
+                                                    <button type="button" onClick={() => setEditingExample(example)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+                                                        <Pencil size={14} aria-hidden="true" />
+                                                        Edit
+                                                    </button>
+                                                    <button type="button" onClick={() => setPendingExampleDeletion(example)} aria-label="Delete example" title="Delete example" className="text-slate-400 transition hover:text-red-600 dark:hover:text-red-400">
+                                                        <Trash2 size={16} aria-hidden="true" />
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div className="divide-y divide-slate-100 dark:divide-slate-800">
                                                 <div className="p-5">
@@ -343,6 +400,21 @@ export default function QuestionDetailsComponent({ questionId }) {
                     msg={`Change status to ${statusDetails[pendingStatus].label}?`}
                     onCancel={() => setPendingStatus(null)}
                     onOk={confirmStatusChange}
+                />
+            )}
+            {editingExample && (
+                <QuestionExampleModal
+                    questionId={questionId}
+                    example={editingExample.id ? editingExample : null}
+                    onClose={() => setEditingExample(null)}
+                    onSaved={handleExampleSaved}
+                />
+            )}
+            {pendingExampleDeletion && (
+                <ConfirmModal
+                    msg="Delete this example?"
+                    onCancel={() => setPendingExampleDeletion(null)}
+                    onOk={confirmExampleDeletion}
                 />
             )}
         </>
