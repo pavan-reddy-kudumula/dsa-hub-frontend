@@ -9,6 +9,7 @@ import ConfirmModal from "@/components/ConfirmModal";
 import { UserContext } from "@/context/UserContext";
 import CreateNoteComponent from "../notes/CreateNoteComponent";
 import QuestionExampleModal from "./QuestionExampleModal";
+import QuestionPlatformModal from "./QuestionPlatformModal";
 
 function formatValue(value) {
     if (value === null || value === undefined || value === "") {
@@ -53,6 +54,9 @@ export default function QuestionDetailsComponent({ questionId }) {
     const [editingExample, setEditingExample] = useState(null);
     const [pendingExampleDeletion, setPendingExampleDeletion] = useState(null);
     const [exampleError, setExampleError] = useState("");
+    const [editingPlatformLink, setEditingPlatformLink] = useState(null);
+    const [pendingPlatformDeletion, setPendingPlatformDeletion] = useState(null);
+    const [platformError, setPlatformError] = useState("");
 
     useEffect(() => {
         let isMounted = true;
@@ -138,6 +142,7 @@ export default function QuestionDetailsComponent({ questionId }) {
     const platformLinks = questionDetails?.platform_links ?? [];
     const companies = questionDetails?.companies ?? [];
     const isBookmarked = questionDetails?.bookmark ?? false;
+    const isAdmin = userDetails?.user?.role === "admin";
     const userQuestions = Array.isArray(userDetails?.userQuestions) ? userDetails.userQuestions : [];
     const userQuestion = userQuestions.find((entry) => String(entry.question_id) === String(question.id ?? questionId));
     const currentStatus = statusDetails[userQuestion?.status] ?? statusDetails.not_attempted;
@@ -177,6 +182,8 @@ export default function QuestionDetailsComponent({ questionId }) {
     }
 
     function handleExampleSaved(savedExample, originalExampleId) {
+        if (!isAdmin) return;
+
         setQuestionDetails((currentDetails) => {
             const currentExamples = currentDetails?.examples ?? [];
             const savedExampleId = originalExampleId ?? savedExample.id ?? savedExample.example_id;
@@ -194,7 +201,7 @@ export default function QuestionDetailsComponent({ questionId }) {
     }
 
     async function confirmExampleDeletion() {
-        if (!pendingExampleDeletion) return;
+        if (!isAdmin || !pendingExampleDeletion) return;
 
         const exampleId = pendingExampleDeletion.id ?? pendingExampleDeletion.example_id;
         setExampleError("");
@@ -211,6 +218,45 @@ export default function QuestionDetailsComponent({ questionId }) {
         } catch (requestError) {
             console.error(requestError?.response?.data?.message || requestError);
             setExampleError(requestError?.response?.data?.message || "Unable to delete the example right now.");
+        }
+    }
+
+    function handlePlatformSaved(savedPlatformLink, originalPlatform) {
+        if (!isAdmin) return;
+
+        setQuestionDetails((currentDetails) => {
+            const currentPlatformLinks = currentDetails?.platform_links ?? [];
+            const savedPlatformId = savedPlatformLink.id ?? savedPlatformLink.platform_id;
+            const existingLinkIndex = currentPlatformLinks.findIndex((platformLink) => {
+                const platformId = platformLink.id ?? platformLink.platform_id;
+                return (savedPlatformId && String(platformId) === String(savedPlatformId)) || platformLink.platform === originalPlatform;
+            });
+            const nextPlatformLinks = existingLinkIndex === -1
+                ? [...currentPlatformLinks, savedPlatformLink]
+                : currentPlatformLinks.map((platformLink, index) => index === existingLinkIndex ? savedPlatformLink : platformLink);
+
+            return { ...currentDetails, platform_links: nextPlatformLinks };
+        });
+        setEditingPlatformLink(null);
+    }
+
+    async function confirmPlatformDeletion() {
+        if (!isAdmin || !pendingPlatformDeletion) return;
+
+        const platformName = pendingPlatformDeletion.platform;
+        setPlatformError("");
+        try {
+            await api.delete(`/questions/${questionId}/platforms/${encodeURIComponent(platformName)}`);
+            setQuestionDetails((currentDetails) => ({
+                ...currentDetails,
+                platform_links: (currentDetails?.platform_links ?? []).filter((platformLink) => {
+                    return platformLink.platform !== platformName;
+                }),
+            }));
+            setPendingPlatformDeletion(null);
+        } catch (requestError) {
+            console.error(requestError?.response?.data?.message || requestError);
+            setPlatformError(requestError?.response?.data?.message || "Unable to delete the platform link right now.");
         }
     }
 
@@ -285,10 +331,12 @@ export default function QuestionDetailsComponent({ questionId }) {
                                     <h2 id="examples-heading" className="text-xl font-bold text-slate-950 dark:text-white">Examples</h2>
                                     <div className="flex items-center gap-4">
                                         <span className="text-sm text-slate-400">{examples.length} example{examples.length === 1 ? "" : "s"}</span>
-                                        <button type="button" onClick={() => setEditingExample({})} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
-                                            <Plus size={16} aria-hidden="true" />
-                                            Add example
-                                        </button>
+                                        {isAdmin && (
+                                            <button type="button" onClick={() => setEditingExample({})} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+                                                <Plus size={16} aria-hidden="true" />
+                                                Add example
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                                 {exampleError && <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-400">{exampleError}</p>}
@@ -297,15 +345,17 @@ export default function QuestionDetailsComponent({ questionId }) {
                                         <article key={example.id ?? index} className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
                                             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3 dark:border-slate-800">
                                                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Example {index + 1}</span>
-                                                <div className="flex items-center gap-3">
-                                                    <button type="button" onClick={() => setEditingExample(example)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
-                                                        <Pencil size={14} aria-hidden="true" />
-                                                        Edit
-                                                    </button>
-                                                    <button type="button" onClick={() => setPendingExampleDeletion(example)} aria-label="Delete example" title="Delete example" className="text-slate-400 transition hover:text-red-600 dark:hover:text-red-400">
-                                                        <Trash2 size={16} aria-hidden="true" />
-                                                    </button>
-                                                </div>
+                                                {isAdmin && (
+                                                    <div className="flex items-center gap-3">
+                                                        <button type="button" onClick={() => setEditingExample(example)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+                                                            <Pencil size={14} aria-hidden="true" />
+                                                            Edit
+                                                        </button>
+                                                        <button type="button" onClick={() => setPendingExampleDeletion(example)} aria-label="Delete example" title="Delete example" className="text-slate-400 transition hover:text-red-600 dark:hover:text-red-400">
+                                                            <Trash2 size={16} aria-hidden="true" />
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="divide-y divide-slate-100 dark:divide-slate-800">
                                                 <div className="p-5">
@@ -376,7 +426,7 @@ export default function QuestionDetailsComponent({ questionId }) {
                                 <div className="mt-4 flex flex-wrap gap-2">{topics.length ? topics.map((topic) => <span key={topic.topic_id} className="rounded-md bg-slate-100 px-2.5 py-1.5 text-xs font-medium capitalize text-slate-600 dark:bg-slate-800 dark:text-slate-300">{topic.topic_name}</span>) : <span className="text-sm text-slate-500">No topics listed.</span>}</div>
                             </section>
 
-                            {platformLinks.length > 0 && <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"><h2 className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Practice elsewhere</h2><div className="mt-4 space-y-3">{platformLinks.map((platformLink) => <a key={platformLink.id} href={platformLink.link} target="_blank" rel="noreferrer" className="flex items-center justify-between text-sm font-semibold capitalize text-blue-600 hover:text-blue-700 dark:text-blue-400">{platformLink.platform}<span aria-hidden="true">↗</span></a>)}</div></section>}
+                            {(platformLinks.length > 0 || isAdmin) && <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"><div className="flex items-center justify-between gap-3"><h2 className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Practice elsewhere</h2>{isAdmin && <button type="button" onClick={() => setEditingPlatformLink({})} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-400"><Plus size={14} aria-hidden="true" />Add</button>}</div>{platformError && <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-400">{platformError}</p>}<div className="mt-4 space-y-3">{platformLinks.length ? platformLinks.map((platformLink) => <div key={platformLink.id ?? platformLink.platform_id} className="flex items-center justify-between gap-3"><a href={platformLink.link} target="_blank" rel="noreferrer" className="min-w-0 truncate text-sm font-semibold capitalize text-blue-600 hover:text-blue-700 dark:text-blue-400">{platformLink.platform}<span aria-hidden="true" className="ml-2">↗</span></a>{isAdmin && <div className="flex shrink-0 items-center gap-2"><button type="button" onClick={() => setEditingPlatformLink(platformLink)} aria-label={`Edit ${platformLink.platform} link`} title="Edit platform link" className="text-slate-400 transition hover:text-blue-600 dark:hover:text-blue-400"><Pencil size={15} aria-hidden="true" /></button><button type="button" onClick={() => setPendingPlatformDeletion(platformLink)} aria-label={`Delete ${platformLink.platform} link`} title="Delete platform link" className="text-slate-400 transition hover:text-red-600 dark:hover:text-red-400"><Trash2 size={15} aria-hidden="true" /></button></div>}</div>) : <p className="text-sm text-slate-500">No platform links available.</p>}</div></section>}
 
                             {companies.length > 0 && (
                                 <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
@@ -402,7 +452,7 @@ export default function QuestionDetailsComponent({ questionId }) {
                     onOk={confirmStatusChange}
                 />
             )}
-            {editingExample && (
+            {isAdmin && editingExample && (
                 <QuestionExampleModal
                     questionId={questionId}
                     example={editingExample.id ? editingExample : null}
@@ -410,11 +460,26 @@ export default function QuestionDetailsComponent({ questionId }) {
                     onSaved={handleExampleSaved}
                 />
             )}
-            {pendingExampleDeletion && (
+            {isAdmin && pendingExampleDeletion && (
                 <ConfirmModal
                     msg="Delete this example?"
                     onCancel={() => setPendingExampleDeletion(null)}
                     onOk={confirmExampleDeletion}
+                />
+            )}
+            {isAdmin && editingPlatformLink && (
+                <QuestionPlatformModal
+                    questionId={questionId}
+                    platformLink={editingPlatformLink.platform ? editingPlatformLink : null}
+                    onClose={() => setEditingPlatformLink(null)}
+                    onSaved={handlePlatformSaved}
+                />
+            )}
+            {isAdmin && pendingPlatformDeletion && (
+                <ConfirmModal
+                    msg="Delete this platform link?"
+                    onCancel={() => setPendingPlatformDeletion(null)}
+                    onOk={confirmPlatformDeletion}
                 />
             )}
         </>
