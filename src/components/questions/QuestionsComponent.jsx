@@ -5,7 +5,7 @@ import NavbarComponent from "../NavbarComponent"
 import { ListChecks, Plus } from "lucide-react"
 import { useContext, useState, useEffect } from "react"
 import { UserContext } from "@/context/UserContext"
-import QuestionModal from "./QuestionModal"
+import QuestionModal from "./modals/QuestionModal"
 import ConfirmModal from "../ConfirmModal"
 import QuestionListComponent from "./QuestionListComponent"
 

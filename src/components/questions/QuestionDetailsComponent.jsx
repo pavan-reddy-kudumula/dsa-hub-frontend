@@ -8,11 +8,11 @@ import NavbarComponent from "@/components/NavbarComponent";
 import ConfirmModal from "@/components/ConfirmModal";
 import { UserContext } from "@/context/UserContext";
 import CreateNoteComponent from "../notes/CreateNoteComponent";
-import QuestionExampleModal from "./QuestionExampleModal";
-import QuestionPlatformModal from "./QuestionPlatformModal";
-import QuestionSolutionModal from "./QuestionSolutionModal";
-import QuestionTopicModal from "./QuestionTopicModal";
-import QuestionCompanyModal from "./QuestionCompanyModal";
+import QuestionExampleModal from "./modals/QuestionExampleModal";
+import QuestionPlatformModal from "./modals/QuestionPlatformModal";
+import QuestionSolutionModal from "./modals/QuestionSolutionModal";
+import QuestionTopicModal from "./modals/QuestionTopicModal";
+import QuestionCompanyModal from "./modals/QuestionCompanyModal";
 
 function formatValue(value) {
     if (value === null || value === undefined || value === "") {
