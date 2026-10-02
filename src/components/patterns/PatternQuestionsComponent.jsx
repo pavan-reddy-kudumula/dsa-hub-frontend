@@ -4,7 +4,7 @@ import api from "@/lib/axios";
 import Link from "next/link";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "@/context/UserContext";
-import QuestionModal from "../questions/QuestionModal";
+import QuestionModal from "../questions/modals/QuestionModal";
 import ConfirmModal from "../ConfirmModal";
 import QuestionListComponent from "../questions/QuestionListComponent";
 
