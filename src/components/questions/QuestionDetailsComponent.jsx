@@ -12,6 +12,7 @@ import QuestionExampleModal from "./QuestionExampleModal";
 import QuestionPlatformModal from "./QuestionPlatformModal";
 import QuestionSolutionModal from "./QuestionSolutionModal";
 import QuestionTopicModal from "./QuestionTopicModal";
+import QuestionCompanyModal from "./QuestionCompanyModal";
 
 function formatValue(value) {
     if (value === null || value === undefined || value === "") {
@@ -63,6 +64,9 @@ export default function QuestionDetailsComponent({ questionId }) {
     const [pendingSolutionDeletion, setPendingSolutionDeletion] = useState(null);
     const [solutionError, setSolutionError] = useState("");
     const [editingTopics, setEditingTopics] = useState(false);
+    const [editingCompanies, setEditingCompanies] = useState(false);
+    const [pendingTopicDeletion, setPendingTopicDeletion] = useState(false);
+    const [pendingCompanyDeletion, setPendingCompanyDeletion] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -317,6 +321,39 @@ export default function QuestionDetailsComponent({ questionId }) {
         setEditingTopics(false);
     }
 
+    function handleCompaniesSaved(savedCompanies) {
+        if (!isAdmin) return;
+        const normalizedCompanies = savedCompanies.map((company) => ({
+            ...company,
+            company_id: company.company_id ?? company.id,
+            name: company.name ?? company.company_name,
+        }));
+        setQuestionDetails((currentDetails) => ({ ...currentDetails, companies: normalizedCompanies }));
+        setEditingCompanies(false);
+    }
+
+    async function confirmTopicDeletion() {
+        try {
+            const topicIds = topics.map((topic) => topic.topic_id ?? topic.id).filter(Boolean);
+            await api.delete(`/questions/${questionId}/topics`, { data: { topicIds } });
+            setQuestionDetails((currentDetails) => ({ ...currentDetails, topics: [] }));
+            setPendingTopicDeletion(false);
+        } catch (requestError) {
+            console.error(requestError?.response?.data?.message || requestError);
+        }
+    }
+
+    async function confirmCompanyDeletion() {
+        try {
+            const companyIds = companies.map((company) => company.company_id ?? company.id).filter(Boolean);
+            await api.delete(`/questions/${questionId}/companies`, { data: { companyIds } });
+            setQuestionDetails((currentDetails) => ({ ...currentDetails, companies: [] }));
+            setPendingCompanyDeletion(false);
+        } catch (requestError) {
+            console.error(requestError?.response?.data?.message || requestError);
+        }
+    }
+
     return (
         <>
             <NavbarComponent />
@@ -484,15 +521,15 @@ export default function QuestionDetailsComponent({ questionId }) {
                             </section>
 
                             <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                                <div className="flex items-center justify-between gap-3"><h2 className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Topics</h2>{isAdmin && <button type="button" onClick={() => setEditingTopics(true)} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-400"><Pencil size={14} aria-hidden="true" />Edit</button>}</div>
+                                <div className="flex items-center justify-between gap-3"><h2 className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Topics</h2>{isAdmin && <div className="flex items-center gap-3"><button type="button" onClick={() => setEditingTopics(true)} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-400"><Pencil size={14} aria-hidden="true" />Edit</button>{topics.length > 0 && <button type="button" onClick={() => setPendingTopicDeletion(true)} aria-label="Delete all topics" title="Delete all topics" className="text-slate-400 transition hover:text-red-600 dark:hover:text-red-400"><Trash2 size={15} aria-hidden="true" /></button>}</div>}</div>
                                 <div className="mt-4 flex flex-wrap gap-2">{topics.length ? topics.map((topic) => <span key={topic.topic_id ?? topic.id} className="rounded-md bg-slate-100 px-2.5 py-1.5 text-xs font-medium capitalize text-slate-600 dark:bg-slate-800 dark:text-slate-300">{topic.topic_name ?? topic.name}</span>) : <span className="text-sm text-slate-500">No topics listed.</span>}</div>
                             </section>
 
                             {(platformLinks.length > 0 || isAdmin) && <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"><div className="flex items-center justify-between gap-3"><h2 className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Practice elsewhere</h2>{isAdmin && <button type="button" onClick={() => setEditingPlatformLink({})} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-400"><Plus size={14} aria-hidden="true" />Add</button>}</div>{platformError && <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-400">{platformError}</p>}<div className="mt-4 space-y-3">{platformLinks.length ? platformLinks.map((platformLink) => <div key={platformLink.id ?? platformLink.platform_id} className="flex items-center justify-between gap-3"><a href={platformLink.link} target="_blank" rel="noreferrer" className="min-w-0 truncate text-sm font-semibold capitalize text-blue-600 hover:text-blue-700 dark:text-blue-400">{platformLink.platform}<span aria-hidden="true" className="ml-2">↗</span></a>{isAdmin && <div className="flex shrink-0 items-center gap-2"><button type="button" onClick={() => setEditingPlatformLink(platformLink)} aria-label={`Edit ${platformLink.platform} link`} title="Edit platform link" className="text-slate-400 transition hover:text-blue-600 dark:hover:text-blue-400"><Pencil size={15} aria-hidden="true" /></button><button type="button" onClick={() => setPendingPlatformDeletion(platformLink)} aria-label={`Delete ${platformLink.platform} link`} title="Delete platform link" className="text-slate-400 transition hover:text-red-600 dark:hover:text-red-400"><Trash2 size={15} aria-hidden="true" /></button></div>}</div>) : <p className="text-sm text-slate-500">No platform links available.</p>}</div></section>}
 
-                            {companies.length > 0 && (
+                            {(companies.length > 0 || isAdmin) && (
                                 <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                                    <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Companies</h2>
+                                    <div className="flex items-center justify-between gap-3"><h2 className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Companies</h2>{isAdmin && <div className="flex items-center gap-3"><button type="button" onClick={() => setEditingCompanies(true)} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-400"><Pencil size={14} aria-hidden="true" />Edit</button>{companies.length > 0 && <button type="button" onClick={() => setPendingCompanyDeletion(true)} aria-label="Delete all companies" title="Delete all companies" className="text-slate-400 transition hover:text-red-600 dark:hover:text-red-400"><Trash2 size={15} aria-hidden="true" /></button>}</div>}</div>
                                     <div className="mt-4 space-y-3">
                                         {companies.map((company) => (
                                             <div key={company.company_id ?? company.id ?? company.name} className="flex items-center gap-3">
@@ -559,12 +596,34 @@ export default function QuestionDetailsComponent({ questionId }) {
                     onOk={confirmSolutionDeletion}
                 />
             )}
+            {isAdmin && pendingTopicDeletion && (
+                <ConfirmModal
+                    msg="Delete all topics from this question?"
+                    onCancel={() => setPendingTopicDeletion(false)}
+                    onOk={confirmTopicDeletion}
+                />
+            )}
+            {isAdmin && pendingCompanyDeletion && (
+                <ConfirmModal
+                    msg="Delete all companies from this question?"
+                    onCancel={() => setPendingCompanyDeletion(false)}
+                    onOk={confirmCompanyDeletion}
+                />
+            )}
             {isAdmin && editingTopics && (
                 <QuestionTopicModal
                     questionId={questionId}
                     topics={topics}
                     onClose={() => setEditingTopics(false)}
                     onSaved={handleTopicsSaved}
+                />
+            )}
+            {isAdmin && editingCompanies && (
+                <QuestionCompanyModal
+                    questionId={questionId}
+                    companies={companies}
+                    onClose={() => setEditingCompanies(false)}
+                    onSaved={handleCompaniesSaved}
                 />
             )}
         </>
